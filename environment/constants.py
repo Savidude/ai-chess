@@ -1,0 +1,22 @@
+ROWS = 8
+COLUMNS = 8
+NUM_PIECES = 6
+
+WIDTH = 800
+HEIGHT = 800
+
+WHITE = (255, 255, 255)
+GREY = (128, 128, 128)
+YELLOW = (204, 204, 0)
+BLUE = (50, 255, 255)
+BLACK = (0, 0, 0)
+
+TEAM_WHITE = "w"
+TEAM_BLACK = "b"
+
+# Piece action mapping IDs
+PAWN_1_N_1 = 0
+PAWN_1_N_2 = 1
+PAWN_1_NW_1 = 2
+PAWN_1_NE_1 = 4
+
