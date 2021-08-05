@@ -13,10 +13,3 @@ BLACK = (0, 0, 0)
 
 TEAM_WHITE = "w"
 TEAM_BLACK = "b"
-
-# Piece action mapping IDs
-PAWN_1_N_1 = 0
-PAWN_1_N_2 = 1
-PAWN_1_NW_1 = 2
-PAWN_1_NE_1 = 4
-
