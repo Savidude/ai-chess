@@ -1,5 +1,6 @@
 from agent import Agent
 from environment.board import Board
+from environment.board import Move
 
 import torch
 
@@ -19,24 +20,32 @@ class ChessEnvManager:
         self.env = Board()
         self.white = Agent(device, TEAM_WHITE)
         self.black = Agent(device, TEAM_BLACK)
-        self.current_agent = TEAM_WHITE
         self.turns = 0
 
-    def perform_action(self):
+    def perform_action(self, team):
         state = torch.from_numpy(self.env.get_state()).float()
-        valid_pieces = self.env.get_valid_pieces(self.current_agent)
-        valid_moves = self.env.get_valid_moves(self.current_agent)
-
-        agent = None
-        if self.current_agent == TEAM_WHITE:
-            agent = self.white
-        elif self.current_agent == TEAM_BLACK:
-            agent = self.black
+        valid_pieces = self.env.get_valid_pieces(team)
+        valid_moves = self.env.get_valid_moves(team)
+        agent = self.get_agent(team)
 
         selected_pieces, validated_pieces = agent.select_pieces(state, valid_pieces)
         moves = agent.select_moves(state, valid_moves)
         from_pos, to_pos = self.select_action(validated_pieces, moves)
-        self.env.take_action(self.current_agent, from_pos, to_pos)
+        self.env.take_action(team, from_pos, to_pos)
+
+        self.turns += 1
+
+    def get_agent(self, team):
+        agent = None
+        if team == TEAM_WHITE:
+            if self.turns % 2 != 0:
+                raise Exception("It is not white's turn to take an action")
+            agent = self.white
+        elif team == TEAM_BLACK:
+            if self.turns % 2 != 1:
+                raise Exception("It is not black's turn to take an action")
+            agent = self.black
+        return agent
 
     def select_action(self, validated_pieces, moves):
         possible_actions = {}
@@ -74,12 +83,26 @@ class ChessEnvManager:
         max_action_value = max(possible_actions, key=possible_actions.get)
         return possible_actions[max_action_value]
 
+    def evaluate_reward(self, team):
+        move_history = self.env.history
+        last_opponent_move = move_history[self.turns - 1]
+        last_team_move = move_history[self.turns - 2]
+
+        if last_team_move.team != team or last_opponent_move.team == team:
+            raise Exception("Invalid team has moved")
+        reward = last_team_move.reward - last_opponent_move.reward
+        return reward
+
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     em = ChessEnvManager(device)
 
-    em.perform_action()
+    em.perform_action(TEAM_WHITE)
+    em.perform_action(TEAM_BLACK)
+
+    while True:
+        white_reward = em.evaluate_reward(TEAM_WHITE)
 
 
 if __name__ == "__main__":

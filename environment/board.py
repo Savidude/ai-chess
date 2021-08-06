@@ -20,6 +20,15 @@ bn = piece.Knight(constants.TEAM_BLACK)
 wn = piece.Knight(constants.TEAM_WHITE)
 
 
+class Move:
+    def __init__(self, team, piece_type, from_pos, to_pos, reward):
+        self.team = team
+        self.piece_type = piece_type
+        self.from_pos = from_pos
+        self.to_pos = to_pos
+        self.reward = reward
+
+
 class Board:
     def __init__(self):
         state = [[None for i in range(constants.COLUMNS)] for i in range(constants.ROWS)]
@@ -32,15 +41,17 @@ class Board:
             state[1][i] = bp
             state[6][i] = wp
 
-        # state[5][1] = bp
-
         self.state = state
+        self.history = []
 
     def print_state(self):
         for row in range(constants.ROWS):
             row_str = ""
             for col in range(constants.COLUMNS):
-                row_str += str(self.get_piece(row, col)) + "\t"
+                piece_str = str(self.get_piece(row, col))
+                if piece_str == "None":
+                    piece_str = "00"
+                row_str += piece_str + "\t"
             print(row_str)
 
     def get_state(self):
@@ -105,16 +116,18 @@ class Board:
         if target_piece is not None and target_piece.get_team() == team:
             raise Exception("Trying to kill piece from the same team")
 
-        killed = False
-        if target_piece is not None and target_piece.get_team() != team:
-            killed = True
+        reward = 0
+        if target_piece is not None:
+            reward = target_piece
 
         self.state[from_row][from_col] = None
         self.state[to_row][to_col] = moving_piece
 
+        move = Move(team=team, piece_type=moving_piece, from_pos=from_pos, to_pos=to_pos, reward=reward)
+        self.history.append(move)
+
     def get_piece(self, row, col):
         return self.state[row][col]
-
 
 # class Node:
 #     def __init__(self, row, col, width):

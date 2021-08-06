@@ -73,9 +73,13 @@ class Piece:
         self.team = team
         self.killable = killable
         self.image = image
+        self.value = 0
 
     def get_team(self):
         return self.team
+
+    def get_value(self):
+        return self.value
 
     def get_encoding(self):
         return piece_dict[str(self)]
@@ -96,6 +100,7 @@ class Pawn(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 1
 
     def __str__(self):
         return self.team + "p"
@@ -150,6 +155,7 @@ class Rook(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 5
 
     def __str__(self):
         return self.team + "r"
@@ -165,6 +171,7 @@ class Knight(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 3
 
     def __str__(self):
         return self.team + "n"
@@ -192,6 +199,7 @@ class Bishop(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 3
 
     def __str__(self):
         return self.team + "b"
@@ -207,6 +215,7 @@ class King(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 100
 
     def __str__(self):
         return self.team + "k"
@@ -233,6 +242,7 @@ class Queen(Piece):
         elif team == constants.TEAM_BLACK:
             image = "assets/images/piece3.png"
         super().__init__(team, image)
+        self.value = 9
 
     def __str__(self):
         return self.team + "q"
