@@ -7,6 +7,8 @@ import torch
 TEAM_WHITE = "w"
 TEAM_BLACK = "b"
 
+MOVE_LIMIT = 100
+
 
 def get_pos_by_index(index):
     row = index // 8
@@ -44,6 +46,8 @@ class ChessEnvManager:
         self.black = Agent(device, TEAM_BLACK)
         self.turns = 0
 
+        self.done = False
+
         # hyperparameters
         self.gamma = 0.99
 
@@ -56,21 +60,22 @@ class ChessEnvManager:
         selected_pieces, validated_pieces = agent.select_pieces(state, valid_pieces)
         moves = agent.select_moves(state, valid_moves)
         action = self.select_action(validated_pieces, moves)
-        self.env.take_action(team, action.from_pos, action.to_pos)
+        done = self.env.take_action(team, action.from_pos, action.to_pos)
 
         self.turns += 1
-        self.env.print_state()
-        print()
-        return (selected_pieces, validated_pieces), moves, action
+        if self.turns == MOVE_LIMIT:
+            done = True
+        self.done = done
+        return (selected_pieces, validated_pieces), moves, action, done
 
     def get_agent(self, team):
         agent = None
         if team == TEAM_WHITE:
-            if self.turns % 2 != 0:
+            if self.turns % 2 != 0 and not self.done:
                 raise Exception("It is not white's turn to take an action")
             agent = self.white
         elif team == TEAM_BLACK:
-            if self.turns % 2 != 1:
+            if self.turns % 2 != 1 and not self.done:
                 raise Exception("It is not black's turn to take an action")
             agent = self.black
         return agent
@@ -107,21 +112,35 @@ class ChessEnvManager:
         # return action with the largest action_value
         return sorted(possible_actions.items(), reverse=True)[0][1]
 
+    def optimize_networks(self, team, piece_values, move_values, action):
+        reward = self.evaluate_reward(team)
+        agent = self.get_agent(team)
+        piece_q_val, move_q_val = self.evaluate_q_val(team, agent, reward)
+
+        agent.optimize_piece_selector(piece_values, piece_q_val, action.from_pos)
+        agent.optimize_move_selectors(move_values, move_q_val, action.to_pos, action.moved_piece)
+
     def evaluate_reward(self, team):
         move_history = self.env.history
-        last_opponent_move = move_history[self.turns - 1]
-        last_team_move = move_history[self.turns - 2]
+        if not self.done:
+            last_opponent_move = move_history[self.turns - 1]
+            last_team_move = move_history[self.turns - 2]
 
-        if last_team_move.team != team or last_opponent_move.team == team:
-            raise Exception("Invalid team has moved")
-        reward = last_team_move.reward - last_opponent_move.reward
-        return reward
+            if last_team_move.team != team or last_opponent_move.team == team:
+                raise Exception("Invalid team has moved")
+            reward = last_team_move.reward - last_opponent_move.reward
+            return reward
+        else:
+            last_move = move_history[self.turns - 1]
+            if last_move.team == team:
+                return last_move.reward
+            else:
+                return last_move.reward * -1
 
-    def evaluate_q_val(self, team, reward):
+    def evaluate_q_val(self, team, agent, reward):
         new_state = torch.from_numpy(self.env.get_state()).float()
         valid_pieces = self.env.get_valid_pieces(team)
         valid_moves = self.env.get_valid_moves(team)
-        agent = self.get_agent(team)
 
         _, validated_pieces = agent.select_pieces(new_state, valid_pieces, detach=True)
         moves = agent.select_moves(new_state, valid_moves, detach=True)
@@ -131,36 +150,28 @@ class ChessEnvManager:
         move_q_val = reward + self.gamma * action.move_value
         return piece_q_val, move_q_val
 
-    def optimize_agent_piece_network(self, team, piece_values, piece_q_val, piece_pos):
-        agent = self.get_agent(team)
-        agent.optimize_piece_selector(piece_values, piece_q_val, piece_pos)
-
-    def optimize_agent_move_networks(self, team, move_values, move_q_val, move_pos, piece_moved):
-        agent = self.get_agent(team)
-        agent.optimize_move_selectors(move_values, move_q_val, move_pos, piece_moved)
-
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     em = ChessEnvManager(device)
 
-    white_piece_values, white_move_values, white_action = em.perform_action(TEAM_WHITE)
-    black_piece_values, black_move_values, black_action = em.perform_action(TEAM_BLACK)
+    white_piece_values, white_move_values, white_action, _ = em.perform_action(TEAM_WHITE)
+    black_piece_values, black_move_values, black_action, _ = em.perform_action(TEAM_BLACK)
 
     while True:
-        white_reward = em.evaluate_reward(TEAM_WHITE)
-        white_piece_q_val, white_move_q_val = em.evaluate_q_val(TEAM_WHITE, white_reward)
-        em.optimize_agent_piece_network(TEAM_WHITE, white_piece_values, white_piece_q_val, white_action.from_pos)
-        em.optimize_agent_move_networks(TEAM_WHITE, white_move_values, white_move_q_val, white_action.to_pos,
-                                        white_action.moved_piece)
-        white_piece_values, white_move_values, white_action = em.perform_action(TEAM_WHITE)
+        em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
+        white_piece_values, white_move_values, white_action, done = em.perform_action(TEAM_WHITE)
+        if done:
+            em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
+            em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
+            break
 
-        black_reward = em.evaluate_reward(TEAM_BLACK)
-        black_piece_q_val, black_move_q_val = em.evaluate_q_val(TEAM_BLACK, black_reward)
-        em.optimize_agent_piece_network(TEAM_BLACK, black_piece_values, black_piece_q_val, black_action.from_pos)
-        em.optimize_agent_move_networks(TEAM_BLACK, black_move_values, black_move_q_val, black_action.to_pos,
-                                        black_action.moved_piece)
-        black_piece_values, black_move_values, black_action = em.perform_action(TEAM_BLACK)
+        em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
+        black_piece_values, black_move_values, black_action, done = em.perform_action(TEAM_BLACK)
+        if done:
+            em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
+            em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
+            break
 
 
 if __name__ == "__main__":

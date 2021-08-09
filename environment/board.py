@@ -106,6 +106,7 @@ class Board:
         return moves_dict
 
     def take_action(self, team, from_pos, to_pos):
+        done = False
         from_row, from_col = from_pos
         moving_piece = self.get_piece(from_row, from_col)
         if moving_piece is None or moving_piece.get_team() != team:
@@ -118,13 +119,16 @@ class Board:
 
         reward = 0
         if target_piece is not None:
-            reward = target_piece
+            reward = target_piece.value
+            if target_piece.__class__.__name__ == constants.PIECE_KING:
+                done = True
 
         self.state[from_row][from_col] = None
         self.state[to_row][to_col] = moving_piece
 
         move = Move(team=team, piece_type=moving_piece, from_pos=from_pos, to_pos=to_pos, reward=reward)
         self.history.append(move)
+        return done
 
     def get_piece(self, row, col):
         return self.state[row][col]
