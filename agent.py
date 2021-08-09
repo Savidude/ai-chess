@@ -1,8 +1,12 @@
-from brain.move_selector import mCNN
+from brain.move_selector import MoveSelector
 from brain.piece_selector import pCNN
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
+
+learning_rate = 0.01
 
 
 def flatten_validity_matrix(matrix):
@@ -17,46 +21,71 @@ def get_validated_moves(piece_selected_moves, piece_valid_moves):
     return piece_selected_moves, piece_validated_moves
 
 
+def get_tensor_index_from_pos(pos):
+    row, col = pos
+    return (row * 8) + col
+
+
 class Agent:
     def __init__(self, device, team):
         self.device = device
         self.team = team
 
-        self.piece_selector = pCNN()
+        self.piece_selector = pCNN().to(device=device)
 
-        self.pawn_move_selector = mCNN()
-        self.rook_move_selector = mCNN()
-        self.knight_move_selector = mCNN()
-        self.bishop_move_selector = mCNN()
-        self.queen_move_selector = mCNN()
-        self.king_move_selector = mCNN()
+        self.move_selectors = {
+            'Pawn': MoveSelector(device=device),
+            'Rook': MoveSelector(device=device),
+            'Knight': MoveSelector(device=device),
+            'Bishop': MoveSelector(device=device),
+            'Queen': MoveSelector(device=device),
+            'King': MoveSelector(device=device),
+        }
 
-    def select_pieces(self, state, valid_pieces):
-        # Inserts an additional dimension that represents a batch of size of 1
-        selected_pieces = self.piece_selector(state.unsqueeze(0)).to(self.device)
+        self.loss_func = nn.MSELoss()
+
+    def select_pieces(self, state, valid_pieces, detach=False):
+        if detach:
+            selected_pieces = self.piece_selector(state.unsqueeze(0)).to(self.device).detach()
+        else:
+            # Inserts an additional dimension that represents a batch of size of 1
+            selected_pieces = self.piece_selector(state.unsqueeze(0)).to(self.device)
         valid_pieces_flat = flatten_validity_matrix(valid_pieces)
         validated_pieces = selected_pieces * valid_pieces_flat
         return selected_pieces, validated_pieces
 
-    def select_moves(self, state, valid_moves):
+    def select_moves(self, state, valid_moves, detach=False):
         moves_dict = {}
+        for key in self.move_selectors:
+            if detach:
+                selected_moves = self.move_selectors[key].network(state.unsqueeze(0)).to(self.device).detach()
+            else:
+                selected_moves = self.move_selectors[key].network(state.unsqueeze(0)).to(self.device)
 
-        pawn_selected_moves = self.pawn_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["Pawn"] = get_validated_moves(pawn_selected_moves, valid_moves["Pawn"])
-
-        rook_selected_moves = self.rook_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["Rook"] = get_validated_moves(rook_selected_moves, valid_moves["Rook"])
-
-        knight_selected_moves = self.knight_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["Knight"] = get_validated_moves(knight_selected_moves, valid_moves["Knight"])
-
-        bishop_selected_moves = self.bishop_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["Bishop"] = get_validated_moves(bishop_selected_moves, valid_moves["Bishop"])
-
-        queen_selected_moves = self.queen_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["Queen"] = get_validated_moves(queen_selected_moves, valid_moves["Queen"])
-
-        king_selected_moves = self.king_move_selector(state.unsqueeze(0)).to(self.device)
-        moves_dict["King"] = get_validated_moves(king_selected_moves, valid_moves["King"])
+            moves_dict[key] = get_validated_moves(selected_moves, valid_moves[key])
 
         return moves_dict
+
+    def optimize_piece_selector(self, piece_values, piece_q_val, piece_pos):
+        selected_pieces, validated_pieces = piece_values
+        i = get_tensor_index_from_pos(piece_pos)
+        validated_pieces[0][i] = torch.tensor(piece_q_val)
+
+        loss = self.loss_func(selected_pieces, validated_pieces)
+        optimizer = optim.Adam(params=self.piece_selector.parameters(), lr=learning_rate)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    def optimize_move_selectors(self, move_values, move_q_val, move_pos, piece_moved):
+        for key in move_values:
+            selected_moves, validated_moves = move_values[key]
+            if key == piece_moved:
+                i = get_tensor_index_from_pos(move_pos)
+                validated_moves[0][i] = move_q_val
+
+            loss = self.move_selectors[key].loss_func(selected_moves, validated_moves)
+            optimizer = optim.Adam(params=self.move_selectors[key].network.parameters(), lr=learning_rate)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()

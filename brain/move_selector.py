@@ -33,3 +33,9 @@ class mCNN(nn.Module):
         t = F.relu(self.fc1(t))
         t = self.out(t)
         return t
+
+
+class MoveSelector:
+    def __init__(self, device):
+        self.network = mCNN().to(device=device)
+        self.loss_func = nn.MSELoss()

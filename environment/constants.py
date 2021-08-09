@@ -13,3 +13,10 @@ BLACK = (0, 0, 0)
 
 TEAM_WHITE = "w"
 TEAM_BLACK = "b"
+
+PIECE_PAWN = "Pawn"
+PIECE_ROOK = "Rook"
+PIECE_KNIGHT = "Knight"
+PIECE_BISHOP = "Bishop"
+PIECE_QUEEN = "Queen"
+PIECE_KING = "King"

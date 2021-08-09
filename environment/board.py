@@ -78,12 +78,12 @@ class Board:
 
     def get_valid_moves(self, team):
         moves_dict = {
-            'Pawn': np.zeros((constants.ROWS, constants.COLUMNS)),
-            'Rook': np.zeros((constants.ROWS, constants.COLUMNS)),
-            'Knight': np.zeros((constants.ROWS, constants.COLUMNS)),
-            'Bishop': np.zeros((constants.ROWS, constants.COLUMNS)),
-            'King': np.zeros((constants.ROWS, constants.COLUMNS)),
-            'Queen': np.zeros((constants.ROWS, constants.COLUMNS))
+            constants.PIECE_PAWN: np.zeros((constants.ROWS, constants.COLUMNS)),
+            constants.PIECE_ROOK: np.zeros((constants.ROWS, constants.COLUMNS)),
+            constants.PIECE_KNIGHT: np.zeros((constants.ROWS, constants.COLUMNS)),
+            constants.PIECE_BISHOP: np.zeros((constants.ROWS, constants.COLUMNS)),
+            constants.PIECE_KING: np.zeros((constants.ROWS, constants.COLUMNS)),
+            constants.PIECE_QUEEN: np.zeros((constants.ROWS, constants.COLUMNS))
         }
 
         for row in range(constants.ROWS):
