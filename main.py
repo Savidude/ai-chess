@@ -1,6 +1,7 @@
 from agent import Agent
 from environment.board import Board
 from environment.board import Move
+import utils
 
 import torch
 
@@ -172,6 +173,9 @@ def main():
             em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
             em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
             break
+
+    history = em.env.history
+    utils.write_game_to_file(history)
 
 
 if __name__ == "__main__":

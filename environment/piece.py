@@ -69,9 +69,8 @@ def bishop_valid_moves(team, board, pos):
 
 
 class Piece:
-    def __init__(self, team, image, killable=False):
+    def __init__(self, team, image):
         self.team = team
-        self.killable = killable
         self.image = image
         self.value = 0
 
@@ -96,9 +95,9 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/pawn_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/pawn_black.png"
         super().__init__(team, image)
         self.value = 1
 
@@ -151,9 +150,9 @@ class Pawn(Piece):
 class Rook(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/rook_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/rook_black.png"
         super().__init__(team, image)
         self.value = 5
 
@@ -167,9 +166,9 @@ class Rook(Piece):
 class Knight(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/knight_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/knight_black.png"
         super().__init__(team, image)
         self.value = 3
 
@@ -195,9 +194,9 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/bishop_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/bishop_black.png"
         super().__init__(team, image)
         self.value = 3
 
@@ -211,9 +210,9 @@ class Bishop(Piece):
 class King(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/king_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/king_black.png"
         super().__init__(team, image)
         self.value = 100
 
@@ -238,9 +237,9 @@ class King(Piece):
 class Queen(Piece):
     def __init__(self, team):
         if team == constants.TEAM_WHITE:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/queen_white.png"
         elif team == constants.TEAM_BLACK:
-            image = "assets/images/piece3.png"
+            image = "../assets/images/queen_black.png"
         super().__init__(team, image)
         self.value = 9
 

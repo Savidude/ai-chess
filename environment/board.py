@@ -1,10 +1,11 @@
-import pygame
+# import pygame
 import sys
 
 import numpy as np
+import json
 
-from . import constants
-from . import piece
+from environment import constants
+from environment import piece
 
 bp = piece.Pawn(constants.TEAM_BLACK)
 wp = piece.Pawn(constants.TEAM_WHITE)
@@ -27,6 +28,15 @@ class Move:
         self.from_pos = from_pos
         self.to_pos = to_pos
         self.reward = reward
+
+    def __str__(self):
+        move_dict = {
+            'team': self.team,
+            'piece': str(self.piece_type),
+            'from_pos': self.from_pos,
+            'to_pos': self.to_pos
+        }
+        return json.dumps(move_dict)
 
 
 class Board:
@@ -105,16 +115,16 @@ class Board:
 
         return moves_dict
 
-    def take_action(self, team, from_pos, to_pos):
+    def take_action(self, team, from_pos, to_pos, replay=False):
         done = False
         from_row, from_col = from_pos
         moving_piece = self.get_piece(from_row, from_col)
-        if moving_piece is None or moving_piece.get_team() != team:
+        if (moving_piece is None or moving_piece.get_team() != team) and not replay:
             raise Exception("Invalid piece moved")
 
         to_row, to_col = to_pos
         target_piece = self.get_piece(to_row, to_col)
-        if target_piece is not None and target_piece.get_team() == team:
+        if (target_piece is not None and target_piece.get_team() == team) and not replay:
             raise Exception("Trying to kill piece from the same team")
 
         reward = 0
