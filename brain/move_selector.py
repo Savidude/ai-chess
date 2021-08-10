@@ -37,5 +37,5 @@ class mCNN(nn.Module):
 
 class MoveSelector:
     def __init__(self, device):
-        self.network = mCNN().to(device=device)
+        self.network = mCNN().to(device=device).share_memory()
         self.loss_func = nn.MSELoss()

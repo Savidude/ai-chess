@@ -31,8 +31,7 @@ class Agent:
         self.device = device
         self.team = team
 
-        self.piece_selector = pCNN().to(device=device)
-
+        self.piece_selector = pCNN().to(device=device).share_memory()
         self.move_selectors = {
             'Pawn': MoveSelector(device=device),
             'Rook': MoveSelector(device=device),
