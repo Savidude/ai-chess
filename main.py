@@ -9,6 +9,7 @@ TEAM_WHITE = "w"
 TEAM_BLACK = "b"
 
 MOVE_LIMIT = 100
+NUM_EPISODES = 100
 
 
 def get_pos_by_index(index):
@@ -51,6 +52,10 @@ class ChessEnvManager:
 
         # hyperparameters
         self.gamma = 0.99
+
+    def reset_environment(self):
+        self.env = Board()
+        self.turns = 0
 
     def perform_action(self, team):
         state = torch.from_numpy(self.env.get_state()).float()
@@ -156,26 +161,30 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     em = ChessEnvManager(device)
 
-    white_piece_values, white_move_values, white_action, _ = em.perform_action(TEAM_WHITE)
-    black_piece_values, black_move_values, black_action, _ = em.perform_action(TEAM_BLACK)
+    for episode in range(NUM_EPISODES):
+        em.reset_environment()
 
-    while True:
-        em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
-        white_piece_values, white_move_values, white_action, done = em.perform_action(TEAM_WHITE)
-        if done:
+        white_piece_values, white_move_values, white_action, _ = em.perform_action(TEAM_WHITE)
+        black_piece_values, black_move_values, black_action, _ = em.perform_action(TEAM_BLACK)
+
+        while True:
             em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
-            em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
-            break
+            white_piece_values, white_move_values, white_action, done = em.perform_action(TEAM_WHITE)
+            if done:
+                em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
+                em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
+                break
 
-        em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
-        black_piece_values, black_move_values, black_action, done = em.perform_action(TEAM_BLACK)
-        if done:
-            em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
             em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
-            break
+            black_piece_values, black_move_values, black_action, done = em.perform_action(TEAM_BLACK)
+            if done:
+                em.optimize_networks(TEAM_WHITE, white_piece_values, white_move_values, white_action)
+                em.optimize_networks(TEAM_BLACK, black_piece_values, black_move_values, black_action)
+                break
 
-    history = em.env.history
-    utils.write_game_to_file(history)
+        history = em.env.history
+        utils.write_game_to_file(history, episode)
+        print("Completed episode " + str(episode))
 
 
 if __name__ == "__main__":

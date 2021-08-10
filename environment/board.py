@@ -33,7 +33,6 @@ class Move:
     def __str__(self):
         move_dict = {
             'team': self.team,
-            'piece': str(self.piece_type),
             'from_pos': self.from_pos,
             'to_pos': self.to_pos
         }
