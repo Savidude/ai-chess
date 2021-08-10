@@ -81,13 +81,15 @@ def main(window, game, history_file):
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    move = moves[current_move_index]
-                    _ = game.take_action(move['team'], move['to_pos'], move['from_pos'], replay=True)
+                    game.revert_action()
                     current_move_index -= 1
                 if event.key == pygame.K_RIGHT:
-                    move = moves[current_move_index]
-                    _ = game.take_action(move['team'], move['from_pos'], move['to_pos'], replay=True)
-                    current_move_index += 1
+                    try:
+                        move = moves[current_move_index]
+                        _ = game.take_action(move['team'], move['from_pos'], move['to_pos'], replay=True)
+                        current_move_index += 1
+                    except IndexError:
+                        pass
 
         update_display(window, grid, constants.ROWS, constants.WIDTH, game)
 

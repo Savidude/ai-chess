@@ -22,12 +22,13 @@ wn = piece.Knight(constants.TEAM_WHITE)
 
 
 class Move:
-    def __init__(self, team, piece_type, from_pos, to_pos, reward):
+    def __init__(self, team, piece_type, from_pos, to_pos, reward, killed):
         self.team = team
         self.piece_type = piece_type
         self.from_pos = from_pos
         self.to_pos = to_pos
         self.reward = reward
+        self.killed = killed
 
     def __str__(self):
         move_dict = {
@@ -128,93 +129,31 @@ class Board:
             raise Exception("Trying to kill piece from the same team")
 
         reward = 0
+        killed_piece = None
         if target_piece is not None:
             reward = target_piece.value
+            killed_piece = target_piece
             if target_piece.__class__.__name__ == constants.PIECE_KING:
                 done = True
 
         self.state[from_row][from_col] = None
         self.state[to_row][to_col] = moving_piece
 
-        move = Move(team=team, piece_type=moving_piece, from_pos=from_pos, to_pos=to_pos, reward=reward)
+        move = Move(team=team, piece_type=moving_piece, from_pos=from_pos, to_pos=to_pos, reward=reward,
+                    killed=killed_piece)
         self.history.append(move)
         return done
 
+    def revert_action(self):
+        last_move = self.history[len(self.history) - 1]
+        to_row, to_col = last_move.to_pos
+        from_row, from_col = last_move.from_pos
+        moved_piece = self.get_piece(to_row, to_col)
+
+        self.state[from_row][from_col] = moved_piece
+        self.state[to_row][to_col] = last_move.killed
+
+        del self.history[-1]
+
     def get_piece(self, row, col):
         return self.state[row][col]
-
-# class Node:
-#     def __init__(self, row, col, width):
-#         self.row = row
-#         self.col = col
-#         self.x = int(row * width)
-#         self.y = int(col * width)
-#         self.colour = constants.WHITE
-#         self.occupied = None
-#
-#     def draw(self, window):
-#         pygame.draw.rect(window, self.colour, (self.x, self.y, constants.WIDTH / 8, constants.HEIGHT / 8))
-#
-#     def setup(self, window, board):
-#         piece = board.get_piece(self.col, self.row)
-#         if piece is None:
-#             pass
-#         else:
-#             window.blit(pygame.image.load(piece.image), (self.x, self.y))
-
-
-# def make_grid(rows, columns, width):
-#     grid = []
-#     node_width = width // rows
-#
-#     for row in range(rows):
-#         grid.append([])
-#         for col in range(columns):
-#             node = Node(row, col, node_width)
-#             grid[row].append(node)
-#             if (col + row) % 2 == 1:
-#                 grid[row][col].colour = constants.GREY
-#     return grid
-
-
-# def draw_grid(window, rows, width):
-#     node_width = width // 8
-#     for i in range(rows):
-#         pygame.draw.line(window, constants.BLACK, (0, i * node_width), (width, i * node_width))
-#         for j in range(rows):
-#             pygame.draw.line(window, constants.BLACK, (j * node_width, 0), (j * node_width, width))
-#
-#
-# def update_display(window, grid, rows, width, board):
-#     for row in grid:
-#         for node in row:
-#             node.draw(window)
-#             node.setup(window, board)
-#     draw_grid(window, rows, width)
-#     pygame.display.update()
-
-
-# def main(window, board):
-#     moves = 0
-#     selected = False
-#     piece_to_move = []
-#
-#     grid = make_grid(constants.ROWS, constants.COLUMNS, constants.WIDTH)
-#
-#     while True:
-#         pygame.time.delay(50)  # reduce CPU load
-#
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 pygame.quit()
-#                 sys.exit()
-#
-#         update_display(window, grid, constants.ROWS, constants.WIDTH, board)
-#
-#
-# if __name__ == "__main__":
-#     board = Board()
-#     print(board.get_state())
-#     # board.print_state()
-#     window = pygame.display.set_mode((constants.HEIGHT, constants.WIDTH))
-#     main(window, board)
