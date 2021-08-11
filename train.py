@@ -11,6 +11,8 @@ TEAM_BLACK = "b"
 MOVE_LIMIT = 100
 NUM_EPISODES = 100
 
+LIVING_PENALTY = -0.1
+
 
 def get_pos_by_index(index):
     row = index // 8
@@ -133,7 +135,7 @@ class ChessEnvManager:
 
             if last_team_move.team != team or last_opponent_move.team == team:
                 raise Exception("Invalid team has moved")
-            reward = last_team_move.reward - last_opponent_move.reward
+            reward = last_team_move.reward - last_opponent_move.reward + LIVING_PENALTY
             return reward
         else:
             last_move = move_history[self.turns - 1]

@@ -15,6 +15,8 @@ def main():
     white_agent = Agent(device, TEAM_WHITE)
     black_agent = Agent(device, TEAM_BLACK)
 
+    # train(0, white_agent, black_agent) # uncomment to debug on a single thread
+
     processes = []
     for rank in range(NUM_PROCESSES):
         p = mp.Process(target=train, args=(rank, white_agent, black_agent))

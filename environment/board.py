@@ -126,7 +126,7 @@ class Board:
         if (target_piece is not None and target_piece.get_team() == team) and not replay:
             raise Exception("Trying to kill piece from the same team")
 
-        reward = -0.1
+        reward = 0
         killed_piece = None
         if target_piece is not None:
             reward = target_piece.value
