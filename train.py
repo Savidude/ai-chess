@@ -9,7 +9,7 @@ TEAM_WHITE = "w"
 TEAM_BLACK = "b"
 
 MOVE_LIMIT = 100
-NUM_EPISODES = 10
+NUM_EPISODES = 100
 
 
 def get_pos_by_index(index):

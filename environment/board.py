@@ -22,9 +22,8 @@ wn = piece.Knight(constants.TEAM_WHITE)
 
 
 class Move:
-    def __init__(self, team, piece_type, from_pos, to_pos, reward, killed):
+    def __init__(self, team, from_pos, to_pos, reward, killed):
         self.team = team
-        self.piece_type = piece_type
         self.from_pos = from_pos
         self.to_pos = to_pos
         self.reward = reward
@@ -127,7 +126,7 @@ class Board:
         if (target_piece is not None and target_piece.get_team() == team) and not replay:
             raise Exception("Trying to kill piece from the same team")
 
-        reward = 0
+        reward = -0.1
         killed_piece = None
         if target_piece is not None:
             reward = target_piece.value
@@ -138,8 +137,7 @@ class Board:
         self.state[from_row][from_col] = None
         self.state[to_row][to_col] = moving_piece
 
-        move = Move(team=team, piece_type=moving_piece, from_pos=from_pos, to_pos=to_pos, reward=reward,
-                    killed=killed_piece)
+        move = Move(team=team, from_pos=from_pos, to_pos=to_pos, reward=reward, killed=killed_piece)
         self.history.append(move)
         return done
 

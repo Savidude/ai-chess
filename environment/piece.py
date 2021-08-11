@@ -214,7 +214,7 @@ class King(Piece):
         elif team == constants.TEAM_BLACK:
             image = "../assets/images/king_black.png"
         super().__init__(team, image)
-        self.value = 100
+        self.value = 255
 
     def __str__(self):
         return self.team + "k"
