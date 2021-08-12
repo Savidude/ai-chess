@@ -1,7 +1,10 @@
 import torch
+import torch.nn.functional as F
 
 from environment.board import Board
 from environment.board import Move
+
+from agent import Agent
 
 import utils
 
@@ -158,7 +161,18 @@ class ChessEnvManager:
         return piece_q_val, move_q_val
 
 
-def train(rank, white_agent, black_agent):
+def train(rank, device,
+          white_piece_selector, white_p_move_selector, white_r_move_selector, white_n_move_selector,
+          white_b_move_selector, white_q_move_selector, white_k_move_selector,
+          black_piece_selector, black_p_move_selector, black_r_move_selector, black_n_move_selector,
+          black_b_move_selector, black_q_move_selector, black_k_move_selector
+          ):
+
+    white_agent = Agent(device, TEAM_WHITE, white_piece_selector, white_p_move_selector, white_r_move_selector,
+                        white_n_move_selector, white_b_move_selector, white_q_move_selector, white_k_move_selector)
+    black_agent = Agent(device, TEAM_BLACK, black_piece_selector, black_p_move_selector, black_r_move_selector,
+                        black_n_move_selector, black_b_move_selector, black_q_move_selector, black_k_move_selector)
+
     torch.manual_seed(rank)
     em = ChessEnvManager(white_agent, black_agent)
 
