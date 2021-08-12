@@ -27,20 +27,19 @@ def get_tensor_index_from_pos(pos):
 
 
 class Agent:
-    def __init__(self, device, team):
+    def __init__(self, device, team, pCnn, p_mCNN, r_mCNN, n_mCNN, b_mCNN, q_mCNN, k_mCNN):
         self.device = device
         self.team = team
 
-        self.piece_selector = pCNN().to(device=device).share_memory()
+        self.piece_selector = pCnn
         self.move_selectors = {
-            'Pawn': MoveSelector(device=device),
-            'Rook': MoveSelector(device=device),
-            'Knight': MoveSelector(device=device),
-            'Bishop': MoveSelector(device=device),
-            'Queen': MoveSelector(device=device),
-            'King': MoveSelector(device=device),
+            'Pawn': MoveSelector(p_mCNN),
+            'Rook': MoveSelector(r_mCNN),
+            'Knight': MoveSelector(n_mCNN),
+            'Bishop': MoveSelector(b_mCNN),
+            'Queen': MoveSelector(q_mCNN),
+            'King': MoveSelector(k_mCNN),
         }
-
         self.loss_func = nn.MSELoss()
 
     def select_pieces(self, state, valid_pieces, detach=False):
