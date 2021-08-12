@@ -9,14 +9,14 @@ import torch.optim as optim
 learning_rate = 0.01
 
 
-def flatten_validity_matrix(matrix):
-    t = torch.from_numpy(matrix).float()
+def flatten_validity_matrix(matrix, device):
+    t = torch.from_numpy(matrix).to(device).float()
     t = t.reshape(-1, 64)
     return t
 
 
-def get_validated_moves(piece_selected_moves, piece_valid_moves):
-    piece_valid_moves_flat = flatten_validity_matrix(piece_valid_moves)
+def get_validated_moves(piece_selected_moves, piece_valid_moves, device):
+    piece_valid_moves_flat = flatten_validity_matrix(piece_valid_moves, device)
     piece_validated_moves = piece_selected_moves * piece_valid_moves_flat
     return piece_selected_moves, piece_validated_moves
 
@@ -44,16 +44,18 @@ class Agent:
         self.loss_func = nn.MSELoss()
 
     def select_pieces(self, state, valid_pieces, detach=False):
+        state = state.to(self.device)
         if detach:
             selected_pieces = self.piece_selector(state.unsqueeze(0)).to(self.device).detach()
         else:
             # Inserts an additional dimension that represents a batch of size of 1
             selected_pieces = self.piece_selector(state.unsqueeze(0)).to(self.device)
-        valid_pieces_flat = flatten_validity_matrix(valid_pieces)
+        valid_pieces_flat = flatten_validity_matrix(valid_pieces, self.device)
         validated_pieces = selected_pieces * valid_pieces_flat
         return selected_pieces, validated_pieces
 
     def select_moves(self, state, valid_moves, detach=False):
+        state = state.to(self.device)
         moves_dict = {}
         for key in self.move_selectors:
             if detach:
@@ -61,7 +63,7 @@ class Agent:
             else:
                 selected_moves = self.move_selectors[key].network(state.unsqueeze(0)).to(self.device)
 
-            moves_dict[key] = get_validated_moves(selected_moves, valid_moves[key])
+            moves_dict[key] = get_validated_moves(selected_moves, valid_moves[key], self.device)
 
         return moves_dict
 
