@@ -40,7 +40,10 @@ class pCNN(nn.Module):
         init_weights(self.out, 0)
 
     def count_CNN_output_neurons(self, board_dim):
-        x = Variable(torch.rand(1, *board_dim))  # create a fake board with the given dimensions
+        if not next(self.parameters()).is_cuda:
+            x = Variable(torch.rand(1, *board_dim))  # create a fake board with the given dimensions
+        else:
+            x = Variable(torch.rand(1, *board_dim).to(device='cuda'))
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.relu(self.conv3(x))

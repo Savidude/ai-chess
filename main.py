@@ -17,6 +17,7 @@ def main():
 
     # train(0, white_agent, black_agent) # uncomment to debug on a single thread
 
+    torch.multiprocessing.set_start_method('spawn')
     processes = []
     for rank in range(NUM_PROCESSES):
         p = mp.Process(target=train, args=(rank, white_agent, black_agent))
