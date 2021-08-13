@@ -15,9 +15,10 @@ NUM_PROCESSES = 16
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # white_agent = Agent(device, TEAM_WHITE)
-    # black_agent = Agent(device, TEAM_BLACK)
 
+    """
+    This is the only way I knew how to share 14 networks across multiple processes. Please don't judge me.
+    """
     white_piece_selector = pCNN().to(device=device).share_memory()
     white_p_move_selector = mCNN().to(device=device).share_memory()
     white_r_move_selector = mCNN().to(device=device).share_memory()
